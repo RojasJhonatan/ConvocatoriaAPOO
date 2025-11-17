@@ -3,6 +3,7 @@ package com.example.demo.services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 
@@ -17,9 +18,22 @@ public class DocenteServices {
 	@Autowired
 	DocenteRepository docenteRepository;
 	
-	public DocenteModel save(DocenteModel docenteModel) {
-		return docenteRepository.save(docenteModel);
-		}
+	public ResponseModel save(DocenteModel docenteModel) {
+	    try {
+	        // Validar si el número de documento ya existe
+	        if (docenteRepository.existsByNumeroDocumento(docenteModel.getNumeroDocumento())) {
+	            return new ResponseModel(false, "El número de documento ya existe");
+	        }
+
+	        docenteRepository.save(docenteModel);
+	        return new ResponseModel(true, "Docente registrado");
+
+	    } catch (DataIntegrityViolationException e) {
+	        
+	        return new ResponseModel(false, e.getMessage());
+	    }
+	
+	}
 	public List<DocenteModel> getAll(){
 		return (List<DocenteModel>)docenteRepository.findAll();
 	}
@@ -28,7 +42,15 @@ public class DocenteServices {
 		try {
 			if(!validacionDocente(docenteModel.getId())) {
 				return new ResponseModel(false,"Docente no existe");
-			}else {
+			}
+			//Validación si el numero de documento único cambió 
+			DocenteModel existente = docenteRepository.findById(docenteModel.getId()).orElse(null);
+
+		        if (!existente.getNumeroDocumento().equals(docenteModel.getNumeroDocumento()) &&
+		            docenteRepository.existsByNumeroDocumento(docenteModel.getNumeroDocumento())) {
+
+		            return new ResponseModel(false, "El número de documento ya existe");		      		
+		}else {
 				//Actualización de docente
 				docenteRepository.save(docenteModel);
 				return new ResponseModel(true,"Docente actualizado");
@@ -59,4 +81,6 @@ public class DocenteServices {
 		return docenteRepository.findById(id).isEmpty() ? false : true;
 		
 	}
+	
+	
 }

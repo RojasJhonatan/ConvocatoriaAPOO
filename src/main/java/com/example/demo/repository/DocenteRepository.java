@@ -9,5 +9,6 @@ import com.example.demo.models.DocenteModel;
 public interface DocenteRepository extends CrudRepository<DocenteModel,Integer>{
 	
 	//consultas personalizadas
+	public boolean existsByNumeroDocumento(String documentNumber);
 
 }
